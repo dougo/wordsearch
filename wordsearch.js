@@ -91,7 +91,12 @@ TileSpec.prototype.makeTile = function (parent) {
     distance: 5,
     stack: '.tile',
     revert: 'invalid',
-    revertDuration: 200
+    revertDuration: 200,
+    stop: function (e) {
+      // TO DO: check for valid droppable
+      canvas.removeLayer(1);
+      canvas.drawLayers();
+    }
   });
   return tile;
 }
