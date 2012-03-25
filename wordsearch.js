@@ -140,7 +140,8 @@ function legalSpaces(tile) {
           var c = c0 + i*Δc;
           if (r < 0 || r >= boardSize || c < 0 || c >= boardSize) break;
           var space = spaceAt(board, r, c);
-          if (!isEmpty(space)) break;
+          var tileInSpace = space.data('tile');
+          if (tileInSpace && tileInSpace != tile) break;
           spaces.push(space);
         }
       }
