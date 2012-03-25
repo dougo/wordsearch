@@ -1,96 +1,54 @@
-function drawCircle(element, x, y, r) {
-  var context = element[0].getContext('2d');
-  context.beginPath();
-  context.arc(x, y, r, 0, 2*Math.PI, false);
-  context.stroke();
-}
-
 var tileRadius = 20;
 var boardSize = 10;
 
-function drawSpace(board, r, c) {
-  drawCircle(board, tileRadius*(c*3+1.5), tileRadius*(r*3+1.5), tileRadius);
+var tileData = [
+  ['A', 0, 7],
+  ['B', 2, 3],
+  ['C', 2, 3],
+  ['D', 1, 3],
+  ['E', 0, 10],
+  ['F', 2, 3],
+  ['G', 2, 4],
+  ['H', 3, 2],
+  ['I', 0, 7],
+  ['J', 4, 1],
+  ['K', 3, 2],
+  ['L', 0, 4],
+  ['M', 2, 3],
+  ['N', 1, 4],
+  ['O', 0, 7],
+  ['P', 2, 3],
+  ['Q', 4, 1],
+  ['R', 1, 5],
+  ['S', 1, 5],
+  ['T', 1, 5],
+  ['U', 1, 4],
+  ['V', 4, 1],
+  ['W', 3, 3],
+  ['X', 4, 1],
+  ['Y', 3, 2],
+  ['Z', 4, 1],
+  [' ', 0, 2]
+];
+
+function TileSpec(letter, value, freq) {
+  this.letter = letter;
+  this.value = value;
+  this.freq = freq;
 }
 
-function makeBoard(parent) {
-  var board = $('<canvas />');
-  board.attr('width', tileRadius*boardSize*3);
-  board.attr('height', tileRadius*boardSize*3);
-  for (var r = 0; r < boardSize; r++) {
-    for (var c = 0; c < boardSize; c++) {
-      drawSpace(board, r, c);
-    }
-  }
-  parent.append(board);
-  return board;
+function makeTileSpecs(tileData) {
+  return $.map(tileData, function (args) {
+    var spec = new TileSpec();
+    TileSpec.apply(spec, args);
+    return spec;
+  });
 }
 
-var values = {
-  A: 0,
-  B: 2,
-  C: 2,
-  D: 1,
-  E: 0,
-  F: 2,
-  G: 2,
-  H: 3,
-  I: 0,
-  J: 4,
-  K: 3,
-  L: 0,
-  M: 2,
-  N: 1,
-  O: 0,
-  P: 2,
-  Q: 4,
-  R: 1,
-  S: 1,
-  T: 1,
-  U: 1,
-  V: 4,
-  W: 3,
-  X: 4,
-  Y: 3,
-  Z: 4,
-  blank: 0
-};
+TileSpec.prototype.makeTile = function (parent) {
+  var tile = $('<div class="tile" />').appendTo(parent);
 
-var freqs = {
-  A: 7,
-  B: 3,
-  C: 3,
-  D: 3,
-  E: 10,
-  F: 3,
-  G: 4,
-  H: 2,
-  I: 7,
-  J: 1,
-  K: 2,
-  L: 4,
-  M: 3,
-  N: 4,
-  O: 7,
-  P: 3,
-  Q: 1,
-  R: 5,
-  S: 5,
-  T: 5,
-  U: 4,
-  V: 1,
-  W: 3,
-  X: 1,
-  Y: 2,
-  Z: 1,
-  blank: 2
-};
-
-function makeTile(parent, letter, value) {
-  var tile = $('<div class="tile" />');
-  parent.append(tile);
-
-  tile.letter = letter;
-  tile.letterValue = value;
+  tile.spec = this;
 
   var canvas = $('<canvas />');
   canvas.attr('width', tileRadius*3);
@@ -98,17 +56,46 @@ function makeTile(parent, letter, value) {
   drawCircle(canvas, tileRadius*1.5, tileRadius*1.5, tileRadius);
   tile.append(canvas);
 
-  if (letter != 'blank') {
-    var text = $('<div>' + letter + '</div>');
-    if (value) {
-      text.append($('<sub>' + value + '</sub>'));
-    }
-    tile.append(text);
-    text.position({ my: 'center', at: 'center', of: canvas });
+  var text = $('<div>' + this.letter + '</div>');
+  if (this.value) {
+    text.append($('<sub>' + this.value + '</sub>'));
   }
+  tile.append(text);
+  text.position({ my: 'center', at: 'center', of: canvas });
 
   tile.draggable();
   return tile;
+}
+
+TileSpec.prototype.makeTiles = function (parent) {
+  var tiles = []
+  for (var i = 0; i < this.freq; i++) {
+    tiles.push(this.makeTile(parent));
+  }
+  return tiles;
+}
+
+function drawCircle(element, x, y, r) {
+  var context = element[0].getContext('2d');
+  context.beginPath();
+  context.arc(x, y, r, 0, 2*Math.PI, false);
+  context.stroke();
+}
+
+function drawSpace(board, r, c) {
+  drawCircle(board, tileRadius*(c*3+1.5), tileRadius*(r*3+1.5), tileRadius);
+}
+
+function makeBoard(parent) {
+  var board = $('<canvas />').appendTo(parent);
+  board.attr('width', tileRadius*boardSize*3);
+  board.attr('height', tileRadius*boardSize*3);
+  for (var r = 0; r < boardSize; r++) {
+    for (var c = 0; c < boardSize; c++) {
+      drawSpace(board, r, c);
+    }
+  }
+  return board;
 }
 
 function placeTile(board, tile, r, c) {
@@ -121,11 +108,9 @@ function main() {
   var root = $('#wordsearch');
   var board = makeBoard(root);
   var tiles = [];
-  for (var letter in freqs) {
-    for (var i = 0; i < freqs[letter]; i++) {
-      tiles.push(makeTile(root, letter, values[letter]));
-    }
-  }
+  $.each(makeTileSpecs(tileData), function (i, spec) {
+    tiles.push.apply(tiles, spec.makeTiles(root));
+  });
   $.shuffle(tiles);
   for (var r = 0; r < boardSize; r++) {
     for (var c = 0; c < boardSize; c++) {
