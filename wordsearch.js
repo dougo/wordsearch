@@ -47,6 +47,8 @@ function makeTileSpecs(tileData) {
 
 TileSpec.prototype.makeTile = function (parent) {
   var tile = $('<div class="tile" />').appendTo(parent);
+  tile.width(tileRadius*3);
+  tile.height(tileRadius*3);
 
   tile.spec = this;
 
@@ -90,12 +92,22 @@ TileSpec.prototype.makeTile = function (parent) {
   tile.draggable({
     distance: 5,
     stack: '.tile',
-    revert: 'invalid',
+    revert: function (space) {
+      if (!space) {
+        return true;
+      } else {
+        placeTileOnSpace(tile, space);
+        return false;
+      }
+    },
     revertDuration: 200,
+    start: function (e) {
+      $.each(legalSpaces(tile), function (i, space) {
+        space.droppable();
+      });
+    },
     stop: function (e) {
-      // TO DO: check for valid droppable
-      canvas.removeLayer(1);
-      canvas.drawLayers();
+      $('.space').droppable('destroy');
     }
   });
   return tile;
@@ -109,6 +121,34 @@ TileSpec.prototype.makeTiles = function (parent) {
   return tiles;
 }
 
+function isEmpty(space) {
+  return !space.data('tile');
+}
+
+function legalSpaces(tile) {
+  var board = tile.data('board');
+  var origin = tile.data('origin');
+  var r0 = origin.data('r');
+  var c0 = origin.data('c');
+  var spaces = [];
+  if (isEmpty(origin)) spaces.push(origin);
+  $.each([-1, 0, 1], function (_, Δr) {
+    $.each([-1, 0, 1], function (_, Δc) {
+      if (Δr || Δc) {
+        for (var i = 1; i < boardSize; i++) {
+          var r = r0 + i*Δr;
+          var c = c0 + i*Δc;
+          if (r < 0 || r >= boardSize || c < 0 || c >= boardSize) break;
+          var space = spaceAt(board, r, c);
+          if (!isEmpty(space)) break;
+          spaces.push(space);
+        }
+      }
+    });
+  });
+  return spaces;
+}
+
 function drawCircle(element, p) {
   p.radius = p.radius || tileRadius;
   p.width = p.height = 2*p.radius;
@@ -116,27 +156,60 @@ function drawCircle(element, p) {
   element.drawEllipse(p);
 }
 
-function drawSpace(board, r, c) {
-  drawCircle(board, { x: tileRadius*(c*3+1.5), y: tileRadius*(r*3+1.5) });
+function addSpace(board, r, c) {
+  var space = $('<canvas class="space" />').appendTo(board);
+  space.attr('width', tileRadius*3);
+  space.attr('height', tileRadius*3);
+  drawCircle(space, { x: tileRadius*1.5, y: tileRadius*1.5 });
+  placeSpace(board, space, r, c);
 }
 
 function makeBoard(parent) {
-  var board = $('<canvas />').appendTo(parent);
-  board.attr('width', tileRadius*boardSize*3);
-  board.attr('height', tileRadius*boardSize*3);
+  var board = $('<div id="board" />').appendTo(parent);
+  board.width(tileRadius*boardSize*3);
+  board.height(tileRadius*boardSize*3);
+
+  var spaces = [];
+  for (var r = 0; r < boardSize; r++) spaces.push([]);
+  board.data('spaces', spaces);
+
   for (var r = 0; r < boardSize; r++) {
     for (var c = 0; c < boardSize; c++) {
-      drawSpace(board, r, c);
+      addSpace(board, r, c);
     }
   }
+
   return board;
 }
 
-function placeTile(board, tile, r, c) {
-  tile.position({ my: 'left top', at: 'left top', of: board,
-                  collision: 'none',
-                  offset: c*tileRadius*3 + ' ' + r*tileRadius*3 });
+function spaceAt(board, r, c) {
+  return board.data('spaces')[r][c];  
 }
+
+function placeSpace(board, space, r, c) {
+  board.data('spaces')[r][c] = space;
+  space.data('r', r);
+  space.data('c', c);
+  space.position({ my: 'left top', at: 'left top', of: board,
+                   collision: 'none',
+                   offset: c*tileRadius*3 + ' ' + r*tileRadius*3 });
+}
+
+function placeTileOnSpace(tile, space) {
+  tile.position({ my: 'left top', at: 'left top', of: space,
+                  collision: 'none' });
+  var oldSpace = tile.data('space');
+  if (oldSpace) oldSpace.data('tile', null);
+  space.data('tile', tile);
+  tile.data('space', space);
+}
+
+function placeTileOnBoard(tile, board, r, c) {
+  var space = spaceAt(board, r, c);
+  placeTileOnSpace(tile, space);
+  tile.data('board', board);
+  tile.data('origin', space);
+}  
 
 function main() {
   var root = $('#wordsearch');
@@ -150,7 +223,7 @@ function main() {
     for (var c = 0; c < boardSize; c++) {
       if (r < boardSize/2 - 1 || r > boardSize/2 ||
           c < boardSize/2 - 1 || c > boardSize/2) {
-        placeTile(board, tiles.pop(), r, c);
+        placeTileOnBoard(tiles.pop(), board, r, c);
       }
     }
   }
