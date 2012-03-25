@@ -50,17 +50,15 @@ TileSpec.prototype.makeTile = function (parent) {
 
   tile.spec = this;
 
-  var canvas = $('<canvas />');
+  var canvas = $('<canvas />').appendTo(tile);
   canvas.attr('width', tileRadius*3);
   canvas.attr('height', tileRadius*3);
   drawCircle(canvas, tileRadius*1.5, tileRadius*1.5, tileRadius);
-  tile.append(canvas);
 
-  var text = $('<div>' + this.letter + '</div>');
+  var text = $('<div>' + this.letter + '</div>').appendTo(tile);
   if (this.value) {
     text.append($('<sub>' + this.value + '</sub>'));
   }
-  tile.append(text);
   text.position({ my: 'center', at: 'center', of: canvas });
 
   tile.draggable();
@@ -68,7 +66,7 @@ TileSpec.prototype.makeTile = function (parent) {
 }
 
 TileSpec.prototype.makeTiles = function (parent) {
-  var tiles = []
+  var tiles = [];
   for (var i = 0; i < this.freq; i++) {
     tiles.push(this.makeTile(parent));
   }
@@ -76,10 +74,9 @@ TileSpec.prototype.makeTiles = function (parent) {
 }
 
 function drawCircle(element, x, y, r) {
-  var context = element[0].getContext('2d');
-  context.beginPath();
-  context.arc(x, y, r, 0, 2*Math.PI, false);
-  context.stroke();
+  element.drawEllipse({
+    strokeStyle: 'black', x: x, y: y, width: r*2, height: r*2
+  });
 }
 
 function drawSpace(board, r, c) {
