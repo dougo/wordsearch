@@ -53,7 +53,11 @@ TileSpec.prototype.makeTile = function (parent) {
   var canvas = $('<canvas />').appendTo(tile);
   canvas.attr('width', tileRadius*3);
   canvas.attr('height', tileRadius*3);
-  drawCircle(canvas, tileRadius*1.5, tileRadius*1.5, tileRadius, 'tan');
+  drawCircle(canvas, {
+    x: tileRadius*1.5,
+    y: tileRadius*1.5,
+    fillStyle: 'tan'
+  });
 
   var text = $('<div>' + this.letter + '</div>').appendTo(tile);
   if (this.value) {
@@ -73,15 +77,15 @@ TileSpec.prototype.makeTiles = function (parent) {
   return tiles;
 }
 
-function drawCircle(element, x, y, r, fillStyle) {
-  element.drawEllipse({
-    fillStyle: fillStyle || 'transparent',
-    strokeStyle: 'black', x: x, y: y, width: r*2, height: r*2
-  });
+function drawCircle(element, p) {
+  p.radius = p.radius || tileRadius;
+  p.width = p.height = 2*p.radius;
+  p.strokeStyle = p.strokeStyle || 'black';
+  element.drawEllipse(p);
 }
 
 function drawSpace(board, r, c) {
-  drawCircle(board, tileRadius*(c*3+1.5), tileRadius*(r*3+1.5), tileRadius);
+  drawCircle(board, { x: tileRadius*(c*3+1.5), y: tileRadius*(r*3+1.5) });
 }
 
 function makeBoard(parent) {
