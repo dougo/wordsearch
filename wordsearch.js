@@ -53,7 +53,7 @@ TileSpec.prototype.makeTile = function (parent) {
   var canvas = $('<canvas />').appendTo(tile);
   canvas.attr('width', tileRadius*3);
   canvas.attr('height', tileRadius*3);
-  drawCircle(canvas, tileRadius*1.5, tileRadius*1.5, tileRadius);
+  drawCircle(canvas, tileRadius*1.5, tileRadius*1.5, tileRadius, 'tan');
 
   var text = $('<div>' + this.letter + '</div>').appendTo(tile);
   if (this.value) {
@@ -61,7 +61,7 @@ TileSpec.prototype.makeTile = function (parent) {
   }
   text.position({ my: 'center', at: 'center', of: canvas });
 
-  tile.draggable();
+  tile.draggable({ stack: '.tile', revert: 'invalid', revertDuration: 200 });
   return tile;
 }
 
@@ -73,8 +73,9 @@ TileSpec.prototype.makeTiles = function (parent) {
   return tiles;
 }
 
-function drawCircle(element, x, y, r) {
+function drawCircle(element, x, y, r, fillStyle) {
   element.drawEllipse({
+    fillStyle: fillStyle || 'transparent',
     strokeStyle: 'black', x: x, y: y, width: r*2, height: r*2
   });
 }
