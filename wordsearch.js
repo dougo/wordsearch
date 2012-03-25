@@ -53,10 +53,32 @@ TileSpec.prototype.makeTile = function (parent) {
   var canvas = $('<canvas />').appendTo(tile);
   canvas.attr('width', tileRadius*3);
   canvas.attr('height', tileRadius*3);
-  drawCircle(canvas, {
+  canvas.addLayer({
+    method: 'drawEllipse',
     x: tileRadius*1.5,
     y: tileRadius*1.5,
+    width: tileRadius*2,
+    height: tileRadius*2,
+    strokeStyle: 'black',
     fillStyle: 'tan'
+  });
+  canvas.drawLayers();
+
+  tile.mousedown(function (e) {
+    if (canvas.getLayers().length < 2) {
+      canvas.addLayer({
+        method: 'drawEllipse',
+        strokeStyle: 'red',
+        strokeWidth: 5,
+        x: tileRadius*1.5,
+        y: tileRadius*1.5,
+        width: (tileRadius+3)*2,
+        height: (tileRadius+3)*2
+      });
+    } else {
+      canvas.removeLayer(1);
+    }
+    canvas.drawLayers();
   });
 
   var text = $('<div>' + this.letter + '</div>').appendTo(tile);
@@ -65,7 +87,12 @@ TileSpec.prototype.makeTile = function (parent) {
   }
   text.position({ my: 'center', at: 'center', of: canvas });
 
-  tile.draggable({ stack: '.tile', revert: 'invalid', revertDuration: 200 });
+  tile.draggable({
+    distance: 5,
+    stack: '.tile',
+    revert: 'invalid',
+    revertDuration: 200
+  });
   return tile;
 }
 
