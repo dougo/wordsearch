@@ -118,13 +118,11 @@ Game.prototype = {
 
   scoreWord: function () {
     var score = this.score();
-    $.each(this.selected, function (_, tile) {
-      tile.view.hide();
-      tile.space.tile = null;
-    });
+    $.each(this.selected, function (_, tile) { tile.remove(); });
     this.selected = [];
     this.total += score;
     $('#total').text(this.total);
+    this.updateWord();
   }
 }
 
@@ -357,6 +355,11 @@ Tile.prototype = {
       canvas.drawLayers();
     }
     this.game.updateWord();
+  },
+
+  remove: function () {
+    this.view.css('visibility', 'hidden');
+    this.space.tile = null;
   }
 }
 
