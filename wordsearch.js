@@ -105,7 +105,7 @@ Board.prototype = {
   makeView: function (parent) {
     var view = $('<div id="board" />').appendTo(parent);
     view.data('model', this);
-    this.view = board;
+    this.view = view;
 
     view.width(tileRadius*boardSize*3);
     view.height(tileRadius*boardSize*3);
@@ -205,23 +205,6 @@ Tile.prototype = {
     });
     canvas.drawLayers();
 
-    view.mousedown(function (e) {
-      if (canvas.getLayers().length < 2) {
-        canvas.addLayer({
-          method: 'drawEllipse',
-          strokeStyle: 'red',
-          strokeWidth: 5,
-          x: tileRadius*1.5,
-          y: tileRadius*1.5,
-          width: (tileRadius+3)*2,
-          height: (tileRadius+3)*2
-        });
-      } else {
-        canvas.removeLayer(1);
-      }
-      canvas.drawLayers();
-    });
-
     var label = $('<div class="label" />').appendTo(view);
     $('<div class="letter">' + this.letter + '</div>').appendTo(label);
     if (this.value) {
@@ -230,14 +213,25 @@ Tile.prototype = {
     label.position({ my: 'center', at: 'center', of: canvas });
 
     var tile = this;
+
+    view.mouseup(function (e) {
+      if (!tile.highlit) {
+        tile.highlight();
+      } else {
+        tile.updateHighlight();
+      }
+    });
+
     view.draggable({
       distance: 5,
       stack: '.tile',
       revert: function (space) {
         if (!space) {
+          tile.updateHighlight();
           return true;
         } else {
           space.data('model').placeTile(tile);
+          tile.updateHighlight();
           return false;
         }
       },
@@ -248,9 +242,46 @@ Tile.prototype = {
         });
       },
       stop: function (e) {
+        // This bypasses the mouseup handler, because highlighting is
+        // updated in the revert function.
+        e.stopImmediatePropagation();
         $('.space').droppable('destroy');
       }
     });
+  },
+
+  updateHighlight: function() {
+    if (this.space == this.origin) {
+      this.unhighlight();
+    } else {
+      this.highlight();
+    }
+  },
+
+  highlight: function () {
+    if (!this.highlit) {
+      this.highlit = true;
+      var canvas = this.view.find('canvas');
+      canvas.addLayer({
+        method: 'drawEllipse',
+        strokeStyle: 'red',
+        strokeWidth: 5,
+        x: tileRadius*1.5,
+        y: tileRadius*1.5,
+        width: (tileRadius+3)*2,
+        height: (tileRadius+3)*2
+      });
+      canvas.drawLayers();
+    }
+  },
+
+  unhighlight: function () {
+    if (this.highlit) {
+      this.highlit = false;
+      var canvas = this.view.find('canvas');
+      canvas.removeLayer(1);
+      canvas.drawLayers();
+    }
   }
 }
 
