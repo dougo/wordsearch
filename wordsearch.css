@@ -5,3 +5,11 @@
 div {
     display: inline-block;
 }
+
+.letter {
+    font-size: x-large;
+}
+
+.label {
+    font-weight: bold;
+}
