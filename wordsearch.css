@@ -2,7 +2,7 @@
     cursor: move;
 }
 
-div {
+.tile, .label, .letter {
     display: inline-block;
 }
 

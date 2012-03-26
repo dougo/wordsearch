@@ -35,11 +35,16 @@ var tileData = [
 function Game() {
   this.view = $('#wordsearch');
   this.view.data('model', this);
+  this.view.width(tileRadius*boardSize*3);
+  this.view.height(tileRadius*boardSize*3);
 
   this.board = new Board(this);
   this.makeAllTiles(tileData);
 
   this.board.placeTiles(this.tiles);
+
+  this.selected = [];
+  this.total = 0;
 }
 Game.prototype = {
 
@@ -56,6 +61,70 @@ Game.prototype = {
     for (var i = 0; i < freq; i++) {
       this.tiles.push(new Tile(this, letter, value));
     }
+  },
+
+  select: function (tile) {
+    this.selected.push(tile);
+  },
+
+  unselect: function (tile) {
+    this.selected.splice(this.selected.indexOf(tile), 1);
+  },
+
+  reset: function () {
+    while (this.selected.length > 0) {
+      var tile = this.selected[0];
+      tile.origin.placeTile(tile);
+    }
+  },
+
+  updateWord: function() {
+    this.word = this.getWord();
+    $('#word').text(this.word || '');
+    $('#score').text(this.word ? '= ' + this.score() : '');
+    $('#scoreButton').attr('disabled', this.word ? false : true);
+  },
+
+  getWord: function () {
+    tiles = this.selected;
+    if (tiles.length > 1) {
+      tiles.sort(function (a, b) {
+        if (a == b) return 0;
+        var as = a.space, bs = b.space;
+        return (as.r < bs.r || as.r == bs.r && as.c < bs.c) ? -1 : 1;
+      });
+      var origin = tiles[0].space;
+      var space = tiles[1].space
+      var Δr = space.r - origin.r, Δc = space.c - origin.c;
+      if (Δr >= -1 && Δr <= 1 && Δc >= -1 && Δc <= 1) {
+        for (var i = 2; i < tiles.length; i++) {
+          var next = tiles[i].space;
+          if (next.r - space.r != Δr || next.c - space.c != Δc) return;
+          space = next;
+        }
+        var letters = $.map(tiles, function (tile) { return tile.letter; });
+        return letters.join('');
+      }
+    }
+  },
+
+  score: function () {
+    if (this.word) {
+      var sum = 0;
+      $.each(this.selected, function (_, tile) { sum += tile.value; });
+      return sum * this.selected.length;
+    }
+  },
+
+  scoreWord: function () {
+    var score = this.score();
+    $.each(this.selected, function (_, tile) {
+      tile.view.hide();
+      tile.space.tile = null;
+    });
+    this.selected = [];
+    this.total += score;
+    $('#total').text(this.total);
   }
 }
 
@@ -97,9 +166,9 @@ Board.prototype = {
 
   placeTile: function (tile, r, c) {
     var space = this.spaceAt(r, c);
-    space.placeTile(tile);
-    tile.board = this;
     tile.origin = space;
+    space.placeTile(tile, true);
+    tile.board = this;
   },
 
   makeView: function (parent) {
@@ -133,7 +202,7 @@ Space.prototype = {
                     offset: this.c*tileRadius*3 + ' ' + this.r*tileRadius*3 });
   },
 
-  placeTile: function (tile) {
+  placeTile: function (tile, noUpdate) {
     var oldSpace = tile.space;
     if (oldSpace) oldSpace.tile = null;
     this.tile = tile;
@@ -141,6 +210,8 @@ Space.prototype = {
 
     tile.view.position({ my: 'left top', at: 'left top', of: this.view,
                          collision: 'none' });
+
+    if (!noUpdate) tile.updateHighlight();
   }
 }
 
@@ -152,6 +223,7 @@ function drawCircle(canvas, p) {
 }
 
 function Tile(game, letter, value) {
+  this.game = game;
   this.letter = letter;
   this.value = value;
   this.makeView(game.view);
@@ -231,7 +303,6 @@ Tile.prototype = {
           return true;
         } else {
           space.data('model').placeTile(tile);
-          tile.updateHighlight();
           return false;
         }
       },
@@ -261,6 +332,7 @@ Tile.prototype = {
   highlight: function () {
     if (!this.highlit) {
       this.highlit = true;
+      this.game.select(this);
       var canvas = this.view.find('canvas');
       canvas.addLayer({
         method: 'drawEllipse',
@@ -273,15 +345,18 @@ Tile.prototype = {
       });
       canvas.drawLayers();
     }
+    this.game.updateWord();
   },
 
   unhighlight: function () {
     if (this.highlit) {
       this.highlit = false;
+      this.game.unselect(this);
       var canvas = this.view.find('canvas');
       canvas.removeLayer(1);
       canvas.drawLayers();
     }
+    this.game.updateWord();
   }
 }
 
