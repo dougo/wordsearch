@@ -1,3 +1,19 @@
 Copyright 2012 Doug Orleans.
 This program is distributed under the terms of the GNU AGPL 3.0.
 See COPYING for details.  http://www.gnu.org/licenses/agpl.txt
+
+Wordsearch is a solitaire word game.  The goal to achieve a high score
+by forming long words.  The board begins filled with letter tiles; on
+each turn, find a word reading in a straight line across, backwards,
+up, down, or diagonally, and remove the tiles in that word.  You may
+also slide tiles in straight lines across empty spaces to form a word.
+A word's score is the sum of the tile values times the number of
+tiles.  Continue forming words and removing tiles until you can no
+longer form a word.  Your total game score is the sum of the word
+scores.
+
+Wordsearch is based on the board game of the same name, designed by
+Malcolm Goldsmith and Michael Kindred and published by Waddingtons and
+Pressman in 1988.
+
+http://boardgamegeek.com/boardgame/3860/wordsearch
