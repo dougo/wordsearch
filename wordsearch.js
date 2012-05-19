@@ -210,6 +210,13 @@ Space.prototype = {
                          collision: 'none' });
 
     if (!noUpdate) tile.updateHighlight();
+  },
+
+  isBetween: function (s1, s2) {
+    // TO DO: I suspect there is a simpler/quicker way to compute this.
+    return (s1.r - s2.r)*(s1.c - this.c) == (s1.c - s2.c)*(s1.r - this.r) &&
+      (s1.r <= this.r && this.r <= s2.r || s2.r <= this.r && this.r <= s1.r) &&
+      (s1.c <= this.c && this.c <= s2.c || s2.c <= this.c && this.c <= s1.c);
   }
 }
 
@@ -234,7 +241,15 @@ Tile.prototype = {
     var r0 = this.origin.r;
     var c0 = this.origin.c;
     var spaces = [];
-    if (!this.origin.tile) spaces.push(this.origin);
+    if (!this.origin.tile) {
+      // A tile can't move back to its origin if it would be in the
+      // way of another tile that's already moved.
+      if ($.grep(this.game.selected, function(movedTile) {
+        return tile.origin.isBetween(movedTile.origin, movedTile.space);
+      }).length == 0) {
+        spaces.push(this.origin);
+      }
+    }
     $.each([-1, 0, 1], function (_, Δr) {
       $.each([-1, 0, 1], function (_, Δc) {
         if (Δr || Δc) {
@@ -243,6 +258,7 @@ Tile.prototype = {
             var c = c0 + i*Δc;
             if (r < 0 || r >= boardSize || c < 0 || c >= boardSize) break;
             var space = board.spaceAt(r, c);
+            if (space == tile.origin) break;
             var tileInSpace = space.tile;
             if (tileInSpace && tileInSpace != tile) break;
             spaces.push(space);

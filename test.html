@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <title>Test Wordsearch</title>
+    <link href="css/ui-lightness/jquery-ui-1.8.18.custom.css" rel="stylesheet" />	
+    <link href="wordsearch.css" rel="stylesheet" />	
+    <script src="js/jquery-1.7.1.min.js"></script>
+    <script src="js/jquery-ui-1.8.18.custom.min.js"></script>
+    <script src="js/jcanvas.min.js"></script>
+    <script src="js/jquery.shuffle.js"></script>
+    <script src="wordsearch.js"></script>
+    <script src="js/qunit.js"></script>
+    <link href="css/qunit.css" rel="stylesheet" />
+    <script src="test/tests.js"></script>
+  </head>
+  <body>
+    <h1 id="qunit-header">Test Wordsearch</h1>
+    <h2 id="qunit-banner"></h2>
+    <div id="qunit-testrunner-toolbar"></div>
+    <h2 id="qunit-userAgent"></h2>
+    <ol id="qunit-tests"></ol>
+    <div id="qunit-fixture">
+
+      <div id="wordsearch"></div>
+      <p />
+      <div id="buttons">
+        <input type="submit" value="Reset" onclick="game.reset()" />
+        <input id="scoreButton" type="submit" value="Score"
+               onclick="game.scoreWord()" disabled />
+        <span id="word"></span>
+        <span id="score"></span>
+      </div>
+      <div>
+        Game score: <span id="total">0</span>
+      </div>
+
+    </div>
+  </body>
+</html>
