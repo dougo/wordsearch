@@ -38,4 +38,14 @@ $(function () {
     equal($.inArray(t1.origin, t1.legalSpaces()), -1,
           "tile can't move back to origin");
   });
+
+  test('Issue #8', function() {
+    // TO DO: arrange to call main() from or after QUnit.reset(), so
+    // that the board will be reset and we could use tileAt(4, 3)
+    // here.
+    var t = tileAt(3, 3);
+    move(t, 3, 5);
+    equal($.inArray(t.origin, t.legalSpaces()), 0,
+          "tile can move back to origin");
+  });
 });

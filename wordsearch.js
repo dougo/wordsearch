@@ -245,7 +245,8 @@ Tile.prototype = {
       // A tile can't move back to its origin if it would be in the
       // way of another tile that's already moved.
       if ($.grep(this.game.selected, function(movedTile) {
-        return tile.origin.isBetween(movedTile.origin, movedTile.space);
+        return tile != movedTile &&
+          tile.origin.isBetween(movedTile.origin, movedTile.space);
       }).length == 0) {
         spaces.push(this.origin);
       }
