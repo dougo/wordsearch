@@ -32,21 +32,21 @@ var tileData = [
   [' ', 0, 2]
 ];
 
-function Game() {
-  this.view = $('#wordsearch');
-  this.view.data('model', this);
-  this.view.width(tileRadius*boardSize*3);
-  this.view.height(tileRadius*boardSize*3);
+var Game = Backbone.Model.extend({
+  initialize: function() {
+    this.view = $('#wordsearch');
+    this.view.data('model', this);
+    this.view.width(tileRadius*boardSize*3);
+    this.view.height(tileRadius*boardSize*3);
 
-  this.board = new Board(this);
-  this.makeAllTiles(tileData);
+    this.board = new Board({ game: this });
+    this.makeAllTiles(tileData);
 
-  this.board.placeTiles(this.tiles);
+    this.board.placeTiles(this.tiles);
 
-  this.selected = [];
-  this.total = 0;
-}
-Game.prototype = {
+    this.selected = [];
+    this.total = 0;
+  },
 
   makeAllTiles: function (tileData) {
     this.tiles = [];
@@ -59,7 +59,7 @@ Game.prototype = {
 
   makeTiles: function (letter, value, freq) {
     for (var i = 0; i < freq; i++) {
-      this.tiles.push(new Tile(this, letter, value));
+      this.tiles.push(new Tile({ game: this, letter: letter, value: value }));
     }
   },
 
@@ -124,13 +124,13 @@ Game.prototype = {
     $('#total').text(this.total);
     this.updateWord();
   }
-}
+});
 
-function Board(game) {
-  this.makeView(game.view);
-  this.makeSpaces();
-}
-Board.prototype = {
+var Board = Backbone.Model.extend({
+  initialize: function(attrs) {
+    this.makeView(attrs.game.view);
+    this.makeSpaces();
+  },
 
   makeSpaces: function () {
     this.spaces = [];
@@ -143,7 +143,7 @@ Board.prototype = {
   },
 
   makeSpace: function (r, c) {
-    var space = new Space(this, r, c);
+    var space = new Space({ board: this, r: r, c: c });
     this.spaces[r][c] = space;
   },
 
@@ -177,14 +177,14 @@ Board.prototype = {
     view.width(tileRadius*boardSize*3);
     view.height(tileRadius*boardSize*3);
   }
-}
+});
 
-function Space(board, r, c) {
-  this.r = r;
-  this.c = c;
-  this.makeView(board.view);
-}
-Space.prototype = {
+var Space = Backbone.Model.extend({
+  initialize: function(attrs) {
+    this.r = attrs.r;
+    this.c = attrs.c;
+    this.makeView(attrs.board.view);
+  },
 
   makeView: function (parent) {
     var view = $('<canvas class="space" />').appendTo(parent);
@@ -218,7 +218,7 @@ Space.prototype = {
       (s1.r <= this.r && this.r <= s2.r || s2.r <= this.r && this.r <= s1.r) &&
       (s1.c <= this.c && this.c <= s2.c || s2.c <= this.c && this.c <= s1.c);
   }
-}
+});
 
 function drawCircle(canvas, p) {
   p.radius = p.radius || tileRadius;
@@ -227,13 +227,13 @@ function drawCircle(canvas, p) {
   canvas.drawEllipse(p);
 }
 
-function Tile(game, letter, value) {
-  this.game = game;
-  this.letter = letter;
-  this.value = value;
-  this.makeView(game.view);
-}
-Tile.prototype = {
+var Tile = Backbone.Model.extend({
+  initialize: function(attrs) {
+    this.game = attrs.game;
+    this.letter = attrs.letter;
+    this.value = attrs.value;
+    this.makeView(this.game.view);
+  },
 
   legalSpaces: function() {
     var tile = this;
@@ -378,7 +378,7 @@ Tile.prototype = {
     this.view.css('visibility', 'hidden');
     this.space.tile = null;
   }
-}
+});
 
 var game;
 
