@@ -35,7 +35,6 @@ var tileData = [
 var Game = Backbone.Model.extend({
   initialize: function() {
     this.view = $('#wordsearch');
-    this.view.data('model', this);
     this.view.width(tileRadius*boardSize*3);
     this.view.height(tileRadius*boardSize*3);
 
@@ -79,10 +78,7 @@ var Game = Backbone.Model.extend({
   },
 
   updateWord: function() {
-    this.word = this.getWord();
-    $('#word').text(this.word || '');
-    $('#score').text(this.word ? '= ' + this.score() : '');
-    $('#scoreButton').attr('disabled', this.word ? false : true);
+    this.set('word', this.getWord());
   },
 
   getWord: function () {
@@ -109,7 +105,7 @@ var Game = Backbone.Model.extend({
   },
 
   score: function () {
-    if (this.word) {
+    if (this.get('word')) {
       var sum = 0;
       $.each(this.selected, function (_, tile) { sum += tile.value; });
       return sum * this.selected.length;
@@ -121,8 +117,22 @@ var Game = Backbone.Model.extend({
     $.each(this.selected, function (_, tile) { tile.remove(); });
     this.selected = [];
     this.total += score;
-    $('#total').text(this.total);
     this.updateWord();
+  }
+});
+
+var GameView = Backbone.View.extend({
+  initialize: function (attrs) {
+    this.model.on('change', this.render, this);
+  },
+
+  render: function () {
+    var word = this.model.get('word');
+    $('#word').text(word || '');
+    $('#score').text(word ? '= ' + this.model.score() : '');
+    $('#scoreButton').attr('disabled', !word);
+    $('#total').text(this.model.total);
+    return this;
   }
 });
 
@@ -171,7 +181,6 @@ var Board = Backbone.Model.extend({
 
   makeView: function (parent) {
     var view = $('<div id="board" />').appendTo(parent);
-    view.data('model', this);
     this.view = view;
 
     view.width(tileRadius*boardSize*3);
@@ -381,9 +390,11 @@ var Tile = Backbone.Model.extend({
 });
 
 var game;
+var gameView;
 
 function main() {
   game = new Game();
+  gameView = new GameView({ model: game, el: $('#wordsearch') });
 }
 
 $(main);
