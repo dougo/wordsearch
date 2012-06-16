@@ -70,8 +70,6 @@ var Game = Backbone.Model.extend({
     while (this.selected.length > 0) {
       var tile = this.selected[0];
       tile.origin.placeTile(tile);
-      tile.view.position({ my: 'left top', at: 'left top', of: tile.origin.view,
-                           collision: 'none' });
     }
   },
 
@@ -174,7 +172,7 @@ var Space = Backbone.Model.extend({
     var oldSpace = tile.space;
     if (oldSpace) oldSpace.tile = null;
     this.tile = tile;
-    tile.space = this;
+    tile.setSpace(this);
 
     if (!noUpdate) tile.updateHighlight();
   },
@@ -234,6 +232,11 @@ var Tile = Backbone.Model.extend({
       });
     });
     return spaces;
+  },
+
+  setSpace: function (space) {
+    this.space = space;
+    this.set('space', space);
   },
 
   updateHighlight: function () {
@@ -385,8 +388,9 @@ var TileView = Backbone.View.extend({
     }
     label.position({ my: 'center', at: 'center', of: canvas });
 
-    view.position({ my: 'left top', at: 'left top', of: tile.space.view,
-                    collision: 'none' });
+    this.render();
+
+    this.model.on('change:space', this.render, this);
 
     view.mouseup(function (e) {
       if (!tile.highlit) {
@@ -405,8 +409,6 @@ var TileView = Backbone.View.extend({
           return true;
         } else {
           space.data('model').placeTile(tile);
-          view.position({ my: 'left top', at: 'left top', of: space,
-                          collision: 'none' });
           return false;
         }
       },
@@ -423,6 +425,13 @@ var TileView = Backbone.View.extend({
         $('.space').droppable('destroy');
       }
     });
+  },
+
+  render: function () {
+    this.$el.position({ my: 'left top', at: 'left top',
+                        of: this.model.space.view,
+                        collision: 'none' });
+    return this;
   }
 });
 
