@@ -33,11 +33,7 @@ var tileData = [
 ];
 
 var Game = Backbone.Model.extend({
-  initialize: function() {
-    this.view = $('#wordsearch');
-    this.view.width(tileRadius*boardSize*3);
-    this.view.height(tileRadius*boardSize*3);
-
+  initialize: function () {
     this.board = new Board({ game: this });
     this.makeAllTiles(tileData);
 
@@ -74,10 +70,12 @@ var Game = Backbone.Model.extend({
     while (this.selected.length > 0) {
       var tile = this.selected[0];
       tile.origin.placeTile(tile);
+      tile.view.position({ my: 'left top', at: 'left top', of: tile.origin.view,
+                           collision: 'none' });
     }
   },
 
-  updateWord: function() {
+  updateWord: function () {
     this.set('word', this.getWord());
   },
 
@@ -121,24 +119,9 @@ var Game = Backbone.Model.extend({
   }
 });
 
-var GameView = Backbone.View.extend({
-  initialize: function (attrs) {
-    this.model.on('change', this.render, this);
-  },
-
-  render: function () {
-    var word = this.model.get('word');
-    $('#word').text(word || '');
-    $('#score').text(word ? '= ' + this.model.score() : '');
-    $('#scoreButton').attr('disabled', !word);
-    $('#total').text(this.model.total);
-    return this;
-  }
-});
-
 var Board = Backbone.Model.extend({
-  initialize: function(attrs) {
-    this.makeView(attrs.game.view);
+  initialize: function (attrs) {
+    this.game = attrs.game;
     this.makeSpaces();
   },
 
@@ -177,36 +160,14 @@ var Board = Backbone.Model.extend({
     tile.origin = space;
     space.placeTile(tile, true);
     tile.board = this;
-  },
-
-  makeView: function (parent) {
-    var view = $('<div id="board" />').appendTo(parent);
-    this.view = view;
-
-    view.width(tileRadius*boardSize*3);
-    view.height(tileRadius*boardSize*3);
   }
 });
 
 var Space = Backbone.Model.extend({
-  initialize: function(attrs) {
+  initialize: function (attrs) {
+    this.board = attrs.board;
     this.r = attrs.r;
     this.c = attrs.c;
-    this.makeView(attrs.board.view);
-  },
-
-  makeView: function (parent) {
-    var view = $('<canvas class="space" />').appendTo(parent);
-    view.data('model', this);
-    this.view = view;
-
-    view.attr('width', tileRadius*3);
-    view.attr('height', tileRadius*3);
-    drawCircle(view, { x: tileRadius*1.5, y: tileRadius*1.5 });
-
-    view.position({ my: 'left top', at: 'left top', of: parent,
-                    collision: 'none',
-                    offset: this.c*tileRadius*3 + ' ' + this.r*tileRadius*3 });
   },
 
   placeTile: function (tile, noUpdate) {
@@ -214,9 +175,6 @@ var Space = Backbone.Model.extend({
     if (oldSpace) oldSpace.tile = null;
     this.tile = tile;
     tile.space = this;
-
-    tile.view.position({ my: 'left top', at: 'left top', of: this.view,
-                         collision: 'none' });
 
     if (!noUpdate) tile.updateHighlight();
   },
@@ -237,14 +195,13 @@ function drawCircle(canvas, p) {
 }
 
 var Tile = Backbone.Model.extend({
-  initialize: function(attrs) {
+  initialize: function (attrs) {
     this.game = attrs.game;
     this.letter = attrs.letter;
     this.value = attrs.value;
-    this.makeView(this.game.view);
   },
 
-  legalSpaces: function() {
+  legalSpaces: function () {
     var tile = this;
     var board = this.board;
     var r0 = this.origin.r;
@@ -253,7 +210,7 @@ var Tile = Backbone.Model.extend({
     if (!this.origin.tile) {
       // A tile can't move back to its origin if it would be in the
       // way of another tile that's already moved.
-      if ($.grep(this.game.selected, function(movedTile) {
+      if ($.grep(this.game.selected, function (movedTile) {
         return tile != movedTile &&
           tile.origin.isBetween(movedTile.origin, movedTile.space);
       }).length == 0) {
@@ -279,73 +236,7 @@ var Tile = Backbone.Model.extend({
     return spaces;
   },
 
-  makeView: function (parent) {
-    var view = $('<div class="tile" />').appendTo(parent);
-    view.data('model', this);
-    this.view = view;
-
-    view.width(tileRadius*3);
-    view.height(tileRadius*3);
-
-    var canvas = $('<canvas />').appendTo(view);
-    canvas.attr('width', tileRadius*3);
-    canvas.attr('height', tileRadius*3);
-    canvas.addLayer({
-      method: 'drawEllipse',
-      x: tileRadius*1.5,
-      y: tileRadius*1.5,
-      width: tileRadius*2,
-      height: tileRadius*2,
-      strokeStyle: 'black',
-      fillStyle: 'tan'
-    });
-    canvas.drawLayers();
-
-    var label = $('<div class="label" />').appendTo(view);
-    $('<div class="letter">' + this.letter + '</div>').appendTo(label);
-    if (this.value) {
-      $('<sub class="value">' + this.value + '</sub>').appendTo(label);
-    }
-    label.position({ my: 'center', at: 'center', of: canvas });
-
-    var tile = this;
-
-    view.mouseup(function (e) {
-      if (!tile.highlit) {
-        tile.highlight();
-      } else {
-        tile.updateHighlight();
-      }
-    });
-
-    view.draggable({
-      distance: 5,
-      stack: '.tile',
-      revert: function (space) {
-        if (!space) {
-          tile.updateHighlight();
-          return true;
-        } else {
-          space.data('model').placeTile(tile);
-          return false;
-        }
-      },
-      revertDuration: 200,
-      start: function (e) {
-        $.each(tile.legalSpaces(), function (_, space) {
-          space.view.droppable();
-        });
-      },
-      stop: function (e) {
-        // This bypasses the mouseup handler, because highlighting is
-        // updated in the revert function.
-        e.stopImmediatePropagation();
-        $('.space').droppable('destroy');
-      }
-    });
-  },
-
-  updateHighlight: function() {
+  updateHighlight: function () {
     if (this.space == this.origin) {
       this.unhighlight();
     } else {
@@ -386,6 +277,152 @@ var Tile = Backbone.Model.extend({
   remove: function () {
     this.view.css('visibility', 'hidden');
     this.space.tile = null;
+  }
+});
+
+
+
+var GameView = Backbone.View.extend({
+  initialize: function (attrs) {
+    var game = this.model;
+    var view = this.$el;
+    game.view = view;
+
+    view.width(tileRadius*boardSize*3);
+    view.height(tileRadius*boardSize*3);
+
+    new BoardView({ model: game.board, parent: view });
+
+    game.on('change', this.render, this);
+  },
+
+  render: function () {
+    var word = this.model.get('word');
+    $('#word').text(word || '');
+    $('#score').text(word ? '= ' + this.model.score() : '');
+    $('#scoreButton').attr('disabled', !word);
+    $('#total').text(this.model.total);
+    return this;
+  }
+});
+
+var BoardView = Backbone.View.extend({
+  id: 'board',
+
+  initialize: function (opts) {
+    var board = this.model;
+    var view = this.$el;
+    board.view = view;
+
+    view.appendTo(opts.parent);
+    view.width(tileRadius*boardSize*3);
+    view.height(tileRadius*boardSize*3);
+
+    for (var r = 0; r < boardSize; r++) {
+      for (var c = 0; c < boardSize; c++) {
+        new SpaceView({ model: board.spaces[r][c], parent: view });
+      }
+    }
+  }
+});
+
+var SpaceView = Backbone.View.extend({
+  tagName: 'canvas',
+  className: 'space',
+
+  initialize: function (opts) {
+    var space = this.model;
+    var view = this.$el;
+    view.data('model', space);
+    space.view = view;
+
+    view.appendTo(opts.parent);
+    view.attr('width', tileRadius*3);
+    view.attr('height', tileRadius*3);
+    drawCircle(view, { x: tileRadius*1.5, y: tileRadius*1.5 });
+
+    view.position({ my: 'left top', at: 'left top', of: opts.parent,
+                    collision: 'none',
+                    offset: space.c*tileRadius*3 + ' ' + space.r*tileRadius*3 });
+
+    if (space.tile) {
+      new TileView({ model: space.tile, parent: space.board.game.view});
+    }
+  }
+});
+
+var TileView = Backbone.View.extend({
+  className: 'tile',
+
+  initialize: function (opts) {
+    var tile = this.model;
+    var view = this.$el;
+    view.data('model', tile);
+    tile.view = view;
+
+    view.appendTo(opts.parent);
+    view.width(tileRadius*3);
+    view.height(tileRadius*3);
+
+    var canvas = $('<canvas />').appendTo(view);
+    canvas.attr('width', tileRadius*3);
+    canvas.attr('height', tileRadius*3);
+    canvas.addLayer({
+      method: 'drawEllipse',
+      x: tileRadius*1.5,
+      y: tileRadius*1.5,
+      width: tileRadius*2,
+      height: tileRadius*2,
+      strokeStyle: 'black',
+      fillStyle: 'tan'
+    });
+    canvas.drawLayers();
+
+    var label = $('<div class="label" />').appendTo(view);
+    $('<div class="letter">' + tile.letter + '</div>').appendTo(label);
+    if (tile.value) {
+      $('<sub class="value">' + tile.value + '</sub>').appendTo(label);
+    }
+    label.position({ my: 'center', at: 'center', of: canvas });
+
+    view.position({ my: 'left top', at: 'left top', of: tile.space.view,
+                    collision: 'none' });
+
+    view.mouseup(function (e) {
+      if (!tile.highlit) {
+        tile.highlight();
+      } else {
+        tile.updateHighlight();
+      }
+    });
+
+    view.draggable({
+      distance: 5,
+      stack: '.tile',
+      revert: function (space) {
+        if (!space) {
+          tile.updateHighlight();
+          return true;
+        } else {
+          space.data('model').placeTile(tile);
+          view.position({ my: 'left top', at: 'left top', of: space,
+                          collision: 'none' });
+          return false;
+        }
+      },
+      revertDuration: 200,
+      start: function (e) {
+        $.each(tile.legalSpaces(), function (_, space) {
+          space.view.droppable();
+        });
+      },
+      stop: function (e) {
+        // This bypasses the mouseup handler, because highlighting is
+        // updated in the revert function.
+        e.stopImmediatePropagation();
+        $('.space').droppable('destroy');
+      }
+    });
   }
 });
 
