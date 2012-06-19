@@ -248,38 +248,24 @@ var Tile = Backbone.Model.extend({
   },
 
   highlight: function () {
-    if (!this.highlit) {
-      this.highlit = true;
+    if (!this.get('highlit')) {
+      this.set('highlit', true);
       this.game.select(this);
-      var canvas = this.view.find('canvas');
-      canvas.addLayer({
-        method: 'drawEllipse',
-        strokeStyle: 'red',
-        strokeWidth: 5,
-        x: tileRadius*1.5,
-        y: tileRadius*1.5,
-        width: (tileRadius+3)*2,
-        height: (tileRadius+3)*2
-      });
-      canvas.drawLayers();
     }
     this.game.updateWord();
   },
 
   unhighlight: function () {
-    if (this.highlit) {
-      this.highlit = false;
+    if (this.get('highlit')) {
+      this.set('highlit', false);
       this.game.unselect(this);
-      var canvas = this.view.find('canvas');
-      canvas.removeLayer(1);
-      canvas.drawLayers();
     }
     this.game.updateWord();
   },
 
   remove: function () {
-    this.view.css('visibility', 'hidden');
     this.space.tile = null;
+    this.setSpace(null);
   }
 });
 
@@ -390,10 +376,10 @@ var TileView = Backbone.View.extend({
 
     this.render();
 
-    this.model.on('change:space', this.render, this);
+    this.model.on('change', this.render, this);
 
     view.mouseup(function (e) {
-      if (!tile.highlit) {
+      if (!tile.get('highlit')) {
         tile.highlight();
       } else {
         tile.updateHighlight();
@@ -428,9 +414,33 @@ var TileView = Backbone.View.extend({
   },
 
   render: function () {
-    this.$el.position({ my: 'left top', at: 'left top',
-                        of: this.model.space.view,
-                        collision: 'none' });
+    var space = this.model.space;
+    if (space) {
+      this.$el.position({ my: 'left top', at: 'left top', of: space.view,
+                          collision: 'none' });
+    } else {
+      this.$el.css('visibility', 'hidden');
+    }
+
+    if (this.model.hasChanged('highlit')) {
+      var canvas = this.$('canvas');
+      if (this.model.get('highlit')) {
+        canvas.addLayer({
+          method: 'drawEllipse',
+          strokeStyle: 'red',
+          strokeWidth: 5,
+          x: tileRadius*1.5,
+          y: tileRadius*1.5,
+          width: (tileRadius+3)*2,
+          height: (tileRadius+3)*2
+        });
+        canvas.drawLayers();
+      } else {
+        canvas.removeLayer(1);
+        canvas.drawLayers();
+      }
+    }
+
     return this;
   }
 });
