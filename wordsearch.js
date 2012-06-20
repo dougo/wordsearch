@@ -46,10 +46,10 @@ var Game = Backbone.Model.extend({
   makeAllTiles: function (tileData) {
     this.tiles = [];
     var game = this;
-    $.each(tileData, function (_, args) {
+    _.each(tileData, function (args) {
       game.makeTiles.apply(game, args);
     });
-    $.shuffle(this.tiles);
+    this.tiles = _.shuffle(this.tiles);
   },
 
   makeTiles: function (letter, value, freq) {
@@ -94,7 +94,7 @@ var Game = Backbone.Model.extend({
           if (next.r - space.r != Δr || next.c - space.c != Δc) return;
           space = next;
         }
-        var letters = $.map(tiles, function (tile) { return tile.letter; });
+        var letters = _.map(tiles, function (tile) { return tile.letter; });
         return letters.join('');
       }
     }
@@ -103,14 +103,14 @@ var Game = Backbone.Model.extend({
   score: function () {
     if (this.get('word')) {
       var sum = 0;
-      $.each(this.selected, function (_, tile) { sum += tile.value; });
+      _.each(this.selected, function (tile) { sum += tile.value; });
       return sum * this.selected.length;
     }
   },
 
   scoreWord: function () {
     var score = this.score();
-    $.each(this.selected, function (_, tile) { tile.remove(); });
+    _.each(this.selected, function (tile) { tile.remove(); });
     this.selected = [];
     this.total += score;
     this.updateWord();
@@ -185,13 +185,6 @@ var Space = Backbone.Model.extend({
   }
 });
 
-function drawCircle(canvas, p) {
-  p.radius = p.radius || tileRadius;
-  p.width = p.height = 2*p.radius;
-  p.strokeStyle = p.strokeStyle || 'black';
-  canvas.drawEllipse(p);
-}
-
 var Tile = Backbone.Model.extend({
   initialize: function (attrs) {
     this.game = attrs.game;
@@ -208,15 +201,15 @@ var Tile = Backbone.Model.extend({
     if (!this.origin.tile) {
       // A tile can't move back to its origin if it would be in the
       // way of another tile that's already moved.
-      if ($.grep(this.game.selected, function (movedTile) {
+      if (!_.any(this.game.selected, function (movedTile) {
         return tile != movedTile &&
           tile.origin.isBetween(movedTile.origin, movedTile.space);
-      }).length == 0) {
+      })) {
         spaces.push(this.origin);
       }
     }
-    $.each([-1, 0, 1], function (_, Δr) {
-      $.each([-1, 0, 1], function (_, Δc) {
+    _.each([-1, 0, 1], function (Δr) {
+      _.each([-1, 0, 1], function (Δc) {
         if (Δr || Δc) {
           for (var i = 1; i < boardSize; i++) {
             var r = r0 + i*Δr;
@@ -315,6 +308,13 @@ var BoardView = Backbone.View.extend({
   }
 });
 
+function drawCircle(canvas, p) {
+  p.radius = p.radius || tileRadius;
+  p.width = p.height = 2*p.radius;
+  p.strokeStyle = p.strokeStyle || 'black';
+  canvas.drawEllipse(p);
+}
+
 var SpaceView = Backbone.View.extend({
   tagName: 'canvas',
   className: 'space',
@@ -400,7 +400,7 @@ var TileView = Backbone.View.extend({
       },
       revertDuration: 200,
       start: function (e) {
-        $.each(tile.legalSpaces(), function (_, space) {
+        _.each(tile.legalSpaces(), function (space) {
           space.view.droppable();
         });
       },
