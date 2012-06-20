@@ -67,7 +67,7 @@ var Game = Backbone.Model.extend({
   },
 
   reset: function () {
-    while (this.selected.size() > 0) {
+    while (this.selected.length > 0) {
       var tile = this.selected.at(0);
       tile.origin.placeTile(tile);
     }
@@ -79,13 +79,13 @@ var Game = Backbone.Model.extend({
 
   getWord: function () {
     tiles = this.selected;
-    if (tiles.size() > 1) {
+    if (tiles.length > 1) {
       // Determine if the tiles are in a line.
       var origin = tiles.at(0).space;
       var space = tiles.at(1).space
       var Δr = space.r - origin.r, Δc = space.c - origin.c;
       if (Δr >= -1 && Δr <= 1 && Δc >= -1 && Δc <= 1) {
-        for (var i = 2; i < tiles.size(); i++) {
+        for (var i = 2; i < tiles.length; i++) {
           var next = tiles.at(i).space;
           if (next.r - space.r != Δr || next.c - space.c != Δc) return;
           space = next;
@@ -99,7 +99,7 @@ var Game = Backbone.Model.extend({
     if (this.get('word')) {
       var sum = 0;
       this.selected.each(function (tile) { sum += tile.value; });
-      return sum * this.selected.size();
+      return sum * this.selected.length;
     }
   },
 
