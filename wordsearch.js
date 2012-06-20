@@ -39,7 +39,7 @@ var Game = Backbone.Model.extend({
 
     this.board.placeTiles(this.tiles);
 
-    this.selected = [];
+    this.selected = new Tiles();
     this.total = 0;
   },
 
@@ -59,16 +59,16 @@ var Game = Backbone.Model.extend({
   },
 
   select: function (tile) {
-    this.selected.push(tile);
+    this.selected.add(tile);
   },
 
   unselect: function (tile) {
-    this.selected.splice(this.selected.indexOf(tile), 1);
+    this.selected.remove(tile);
   },
 
   reset: function () {
-    while (this.selected.length > 0) {
-      var tile = this.selected[0];
+    while (this.selected.size() > 0) {
+      var tile = this.selected.at(0);
       tile.origin.placeTile(tile);
     }
   },
@@ -79,23 +79,18 @@ var Game = Backbone.Model.extend({
 
   getWord: function () {
     tiles = this.selected;
-    if (tiles.length > 1) {
-      tiles.sort(function (a, b) {
-        if (a == b) return 0;
-        var as = a.space, bs = b.space;
-        return (as.r < bs.r || as.r == bs.r && as.c < bs.c) ? -1 : 1;
-      });
-      var origin = tiles[0].space;
-      var space = tiles[1].space
+    if (tiles.size() > 1) {
+      // Determine if the tiles are in a line.
+      var origin = tiles.at(0).space;
+      var space = tiles.at(1).space
       var Δr = space.r - origin.r, Δc = space.c - origin.c;
       if (Δr >= -1 && Δr <= 1 && Δc >= -1 && Δc <= 1) {
-        for (var i = 2; i < tiles.length; i++) {
-          var next = tiles[i].space;
+        for (var i = 2; i < tiles.size(); i++) {
+          var next = tiles.at(i).space;
           if (next.r - space.r != Δr || next.c - space.c != Δc) return;
           space = next;
         }
-        var letters = _.map(tiles, function (tile) { return tile.letter; });
-        return letters.join('');
+        return tiles.pluck('letter').join('');
       }
     }
   },
@@ -103,15 +98,15 @@ var Game = Backbone.Model.extend({
   score: function () {
     if (this.get('word')) {
       var sum = 0;
-      _.each(this.selected, function (tile) { sum += tile.value; });
-      return sum * this.selected.length;
+      this.selected.each(function (tile) { sum += tile.value; });
+      return sum * this.selected.size();
     }
   },
 
   scoreWord: function () {
     var score = this.score();
-    _.each(this.selected, function (tile) { tile.remove(); });
-    this.selected = [];
+    this.selected.each(function (tile) { tile.remove(); });
+    this.selected.reset();
     this.total += score;
     this.updateWord();
   }
@@ -201,7 +196,7 @@ var Tile = Backbone.Model.extend({
     if (!this.origin.tile) {
       // A tile can't move back to its origin if it would be in the
       // way of another tile that's already moved.
-      if (!_.any(this.game.selected, function (movedTile) {
+      if (!this.game.selected.any(function (movedTile) {
         return tile != movedTile &&
           tile.origin.isBetween(movedTile.origin, movedTile.space);
       })) {
@@ -259,6 +254,16 @@ var Tile = Backbone.Model.extend({
   remove: function () {
     this.space.tile = null;
     this.setSpace(null);
+  }
+});
+
+var Tiles = Backbone.Collection.extend({
+  model: Tile,
+
+  comparator: function (a, b) {
+    if (a == b) return 0;
+    var as = a.space, bs = b.space;
+    return (as.r < bs.r || as.r == bs.r && as.c < bs.c) ? -1 : 1;
   }
 });
 
