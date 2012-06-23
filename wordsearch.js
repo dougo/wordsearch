@@ -34,28 +34,19 @@ var tileData = [
 
 var Game = Backbone.Model.extend({
   initialize: function () {
-    this.board = new Board({ game: this });
-    this.makeAllTiles(tileData);
-
-    this.board.placeTiles(this.tiles);
-
+    this.board = new Board({ game: this, tiles: this.makeTiles(tileData) });
     this.selected = new Tiles();
     this.total = 0;
   },
 
-  makeAllTiles: function (tileData) {
-    this.tiles = [];
+  makeTiles: function (tileData) {
     var game = this;
-    _.each(tileData, function (args) {
-      game.makeTiles.apply(game, args);
-    });
-    this.tiles = _.shuffle(this.tiles);
-  },
-
-  makeTiles: function (letter, value, freq) {
-    for (var i = 0; i < freq; i++) {
-      this.tiles.push(new Tile({ game: this, letter: letter, value: value }));
-    }
+    return _.shuffle(_.flatten(_.map(tileData, function (args) {
+      return function (letter, value, freq) {
+        return _.map(_.range(freq), function (i) {
+          return new Tile({ game: game, letter: letter, value: value });
+        })}.apply(game, args);
+    })));
   },
 
   select: function (tile) {
@@ -115,22 +106,17 @@ var Game = Backbone.Model.extend({
 var Board = Backbone.Model.extend({
   initialize: function (attrs) {
     this.game = attrs.game;
-    this.makeSpaces();
+    this.spaces = this.makeSpaces();
+    this.placeTiles(attrs.tiles);
   },
 
   makeSpaces: function () {
-    this.spaces = [];
-    for (var r = 0; r < boardSize; r++) {
-      this.spaces.push([]);
-      for (var c = 0; c < boardSize; c++) {
-        this.makeSpace(r, c);
-      }
-    }
-  },
-
-  makeSpace: function (r, c) {
-    var space = new Space({ board: this, r: r, c: c });
-    this.spaces[r][c] = space;
+    var board = this;
+    return _.map(_.range(boardSize), function (r) {
+      return _.map(_.range(boardSize), function (c) {
+        return new Space({ board: board, r: r, c: c });
+      });
+    });
   },
 
   spaceAt: function (r, c) {
@@ -138,21 +124,20 @@ var Board = Backbone.Model.extend({
   },
 
   placeTiles: function (tiles) {
-    for (var r = 0; r < boardSize; r++) {
-      for (var c = 0; c < boardSize; c++) {
+    var board = this;
+    _.each(_.range(boardSize), function (r) {
+      _.each(_.range(boardSize), function (c) {
+        // Leave the center four spaces blank.
         if (r < boardSize/2 - 1 || r > boardSize/2 ||
             c < boardSize/2 - 1 || c > boardSize/2) {
-          this.placeTile(tiles.pop(), r, c);
+          var tile = tiles.pop();
+          var space = board.spaceAt(r, c);
+          tile.origin = space;
+          space.placeTile(tile, true);
+          tile.board = board;
         }
-      }
-    }
-  },
-
-  placeTile: function (tile, r, c) {
-    var space = this.spaceAt(r, c);
-    tile.origin = space;
-    space.placeTile(tile, true);
-    tile.board = this;
+      });
+    });
   }
 });
 

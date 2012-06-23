@@ -12,8 +12,7 @@ $(function () {
     ok(game, 'game object exists');
     ok(game.board, 'board object exists');
 
-    game.makeAllTiles(tileData);
-    equal(game.tiles.length, Math.pow(boardSize, 2) - 4,
+    equal(Math.pow(boardSize, 2) - 4, game.makeTiles(tileData).length,
           'game has correct number of tiles');
   });
 
