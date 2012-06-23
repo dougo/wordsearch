@@ -152,7 +152,7 @@ var Space = Backbone.Model.extend({
     var oldSpace = tile.space;
     if (oldSpace) oldSpace.tile = null;
     this.tile = tile;
-    tile.setSpace(this);
+    tile.moveTo(this);
 
     if (!noUpdate) tile.updateHighlight();
   },
@@ -207,7 +207,7 @@ var Tile = Backbone.Model.extend({
     return spaces;
   },
 
-  setSpace: function (space) {
+  moveTo: function (space) {
     this.space = space;
     this.set('space', space);
   },
@@ -238,7 +238,7 @@ var Tile = Backbone.Model.extend({
 
   remove: function () {
     this.space.tile = null;
-    this.setSpace(null);
+    this.moveTo(null);
   }
 });
 
