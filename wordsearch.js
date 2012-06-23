@@ -290,11 +290,11 @@ var BoardView = Backbone.View.extend({
     view.width(tileRadius*boardSize*3);
     view.height(tileRadius*boardSize*3);
 
-    for (var r = 0; r < boardSize; r++) {
-      for (var c = 0; c < boardSize; c++) {
-        new SpaceView({ model: board.spaces[r][c], parent: view });
-      }
-    }
+    _.each(_.range(boardSize), function (r) {
+      _.each(_.range(boardSize), function (c) {
+        new SpaceView({ model: board.spaceAt(r, c), parent: view });
+      });
+    });
   }
 });
 
