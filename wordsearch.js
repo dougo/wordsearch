@@ -64,10 +64,6 @@ var Game = Backbone.Model.extend({
     }
   },
 
-  updateWord: function () {
-    this.set('word', this.getWord());
-  },
-
   getWord: function () {
     tiles = this.selected;
     if (tiles.length > 1) {
@@ -87,19 +83,17 @@ var Game = Backbone.Model.extend({
   },
 
   score: function () {
-    if (this.get('word')) {
-      var sum = 0;
-      this.selected.each(function (tile) { sum += tile.value; });
-      return sum * this.selected.length;
-    }
+    var sum = 0;
+    this.selected.each(function (tile) { sum += tile.value; });
+    return sum * this.selected.length;
   },
 
   scoreWord: function () {
-    var score = this.score();
-    this.selected.each(function (tile) { tile.remove(); });
-    this.selected.reset();
-    this.total += score;
-    this.updateWord();
+    this.total += this.score();
+    // Copy to a fresh array first, rather than iterating over the
+    // collection (which gets mutated during the iteration).
+    var tiles = this.selected.toArray();
+    _.invoke(tiles, 'remove');
   }
 });
 
@@ -223,20 +217,19 @@ var Tile = Backbone.Model.extend({
   highlight: function () {
     if (!this.get('highlit')) {
       this.set('highlit', true);
-      this.game.select(this);
     }
-    this.game.updateWord();
+    this.game.select(this);
   },
 
   unhighlight: function () {
     if (this.get('highlit')) {
       this.set('highlit', false);
-      this.game.unselect(this);
     }
-    this.game.updateWord();
+    this.game.unselect(this);
   },
 
   remove: function () {
+    this.game.unselect(this);
     this.space.tile = null;
     this.moveTo(null);
   }
@@ -265,11 +258,11 @@ var GameView = Backbone.View.extend({
 
     new BoardView({ model: game.board, parent: view });
 
-    game.on('change', this.render, this);
+    game.selected.on('add remove change', this.render, this);
   },
 
   render: function () {
-    var word = this.model.get('word');
+    var word = this.model.getWord();
     $('#word').text(word || '');
     $('#score').text(word ? '= ' + this.model.score() : '');
     $('#scoreButton').attr('disabled', !word);
