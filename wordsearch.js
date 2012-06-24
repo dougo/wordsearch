@@ -34,9 +34,9 @@ var tileData = [
 
 var Game = Backbone.Model.extend({
   initialize: function () {
-    this.board = new Board({ game: this, tiles: this.makeTiles(tileData) });
-    this.selected = new Tiles();
     this.total = 0;
+    this.selected = new Tiles();
+    this.board = new Board({ game: this, tiles: this.makeTiles(tileData) });
   },
 
   makeTiles: function (tileData) {
@@ -127,7 +127,7 @@ var Board = Backbone.Model.extend({
           var tile = tiles.pop();
           var space = board.spaceAt(r, c);
           tile.origin = space;
-          space.placeTile(tile, true);
+          space.placeTile(tile);
           tile.board = board;
         }
       });
@@ -142,13 +142,11 @@ var Space = Backbone.Model.extend({
     this.c = attrs.c;
   },
 
-  placeTile: function (tile, noUpdate) {
+  placeTile: function (tile) {
     var oldSpace = tile.space;
     if (oldSpace) oldSpace.tile = null;
     this.tile = tile;
     tile.moveTo(this);
-
-    if (!noUpdate) tile.updateHighlight();
   },
 
   isBetween: function (s1, s2) {
@@ -206,30 +204,28 @@ var Tile = Backbone.Model.extend({
     this.set('space', space);
   },
 
-  updateHighlight: function () {
+  isSelected: function () {
+    return this.game.selected.include(this);
+  },
+
+  updateSelection: function () {
     if (this.space == this.origin) {
-      this.unhighlight();
+      this.unselect();
     } else {
-      this.highlight();
+      this.select();
     }
   },
 
-  highlight: function () {
-    if (!this.get('highlit')) {
-      this.set('highlit', true);
-    }
+  select: function () {
     this.game.select(this);
   },
 
-  unhighlight: function () {
-    if (this.get('highlit')) {
-      this.set('highlit', false);
-    }
+  unselect: function () {
     this.game.unselect(this);
   },
 
   remove: function () {
-    this.game.unselect(this);
+    this.unselect();
     this.space.tile = null;
     this.moveTo(null);
   }
@@ -328,6 +324,7 @@ var TileView = Backbone.View.extend({
 
   initialize: function (opts) {
     var tile = this.model;
+    var tileView = this;
     var view = this.$el;
     view.data('model', tile);
     tile.view = view;
@@ -359,13 +356,13 @@ var TileView = Backbone.View.extend({
 
     this.render();
 
-    this.model.on('change', this.render, this);
+    this.model.on('add remove change', this.render, this);
 
     view.mouseup(function (e) {
-      if (!tile.get('highlit')) {
-        tile.highlight();
+      if (!tile.isSelected()) {
+        tile.select();
       } else {
-        tile.updateHighlight();
+        tile.updateSelection();
       }
     });
 
@@ -374,10 +371,14 @@ var TileView = Backbone.View.extend({
       stack: '.tile',
       revert: function (space) {
         if (!space) {
-          tile.updateHighlight();
+          tile.updateSelection();
           return true;
         } else {
           space.data('model').placeTile(tile);
+          // This might not result in an event, if dropped on/near the
+          // same space, but we still need to move it back to the
+          // center of its space, so just call render directly.
+          tileView.render();
           return false;
         }
       },
@@ -388,7 +389,7 @@ var TileView = Backbone.View.extend({
         });
       },
       stop: function (e) {
-        // This bypasses the mouseup handler, because highlighting is
+        // This bypasses the mouseup handler, because selection is
         // updated in the revert function.
         e.stopImmediatePropagation();
         $('.space').droppable('destroy');
@@ -405,9 +406,9 @@ var TileView = Backbone.View.extend({
       this.$el.css('visibility', 'hidden');
     }
 
-    if (this.model.hasChanged('highlit')) {
-      var canvas = this.$('canvas');
-      if (this.model.get('highlit')) {
+    var canvas = this.$('canvas');
+    if (this.model.isSelected()) {
+      if (canvas.getLayers().length == 1) {
         canvas.addLayer({
           method: 'drawEllipse',
           strokeStyle: 'red',
@@ -418,7 +419,9 @@ var TileView = Backbone.View.extend({
           height: (tileRadius+3)*2
         });
         canvas.drawLayers();
-      } else {
+      }
+    } else {
+      if (canvas.getLayers().length > 1) {
         canvas.removeLayer(1);
         canvas.drawLayers();
       }
