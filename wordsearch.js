@@ -358,15 +358,6 @@ var TileView = Backbone.View.extend({
 
     this.model.on('add remove change', this.render, this);
 
-    // Handle clicking on a tile without dragging. 
-    this.$el.mouseup(function (e) {
-      if (!tile.isSelected()) {
-        tile.select();
-      } else {
-        tile.updateSelection();
-      }
-    });
-
     this.$el.draggable({
       distance: 5,
       stack: '.tile',
@@ -429,6 +420,20 @@ var TileView = Backbone.View.extend({
     }
 
     return this;
+  },
+
+  events: {
+    'mouseup': 'mouseup'
+  },
+
+  // Handle clicking on a tile without dragging. 
+  mouseup: function () {
+    var tile = this.model;
+    if (!tile.isSelected()) {
+      tile.select();
+    } else {
+      tile.updateSelection();
+    }
   }
 });
 
