@@ -32,6 +32,8 @@ var tileData = [
   [' ', 0, 2]
 ];
 
+// MODELS
+
 var Game = Backbone.Model.extend({
   initialize: function () {
     this.total = 0;
@@ -242,18 +244,17 @@ var Tiles = Backbone.Collection.extend({
   }
 });
 
-
+// VIEWS
 
 var GameView = Backbone.View.extend({
   initialize: function (attrs) {
     var game = this.model;
-    var view = this.$el;
-    game.view = view;
+    game.view = this;
 
-    view.width(tileRadius*boardSize*3);
-    view.height(tileRadius*boardSize*3);
+    this.$el.width(tileRadius*boardSize*3);
+    this.$el.height(tileRadius*boardSize*3);
 
-    new BoardView({ model: game.board, parent: view });
+    new BoardView({ model: game.board, parent: this });
 
     game.selected.on('add remove change', this.render, this);
   },
@@ -273,12 +274,11 @@ var BoardView = Backbone.View.extend({
 
   initialize: function (opts) {
     var board = this.model;
-    var view = this.$el;
-    board.view = view;
+    var view = board.view = this;
 
-    view.appendTo(opts.parent);
-    view.width(tileRadius*boardSize*3);
-    view.height(tileRadius*boardSize*3);
+    this.$el.appendTo(opts.parent.$el);
+    this.$el.width(tileRadius*boardSize*3);
+    this.$el.height(tileRadius*boardSize*3);
 
     _.each(_.range(boardSize), function (r) {
       _.each(_.range(boardSize), function (c) {
@@ -301,18 +301,19 @@ var SpaceView = Backbone.View.extend({
 
   initialize: function (opts) {
     var space = this.model;
-    var view = this.$el;
-    view.data('model', space);
-    space.view = view;
+    space.view = this;
+    this.$el.data('model', space);
 
-    view.appendTo(opts.parent);
-    view.attr('width', tileRadius*3);
-    view.attr('height', tileRadius*3);
-    drawCircle(view, { x: tileRadius*1.5, y: tileRadius*1.5 });
+    this.$el.appendTo(opts.parent.$el);
+    this.$el.attr('width', tileRadius*3);
+    this.$el.attr('height', tileRadius*3);
+    drawCircle(this.$el, { x: tileRadius*1.5, y: tileRadius*1.5 });
 
-    view.position({ my: 'left top', at: 'left top', of: opts.parent,
-                    collision: 'none',
-                    offset: space.c*tileRadius*3 + ' ' + space.r*tileRadius*3 });
+    this.$el.position({
+      my: 'left top', at: 'left top', of: opts.parent.$el,
+      collision: 'none',
+      offset: space.c*tileRadius*3 + ' ' + space.r*tileRadius*3
+    });
 
     if (space.tile) {
       new TileView({ model: space.tile, parent: space.board.game.view});
@@ -325,16 +326,14 @@ var TileView = Backbone.View.extend({
 
   initialize: function (opts) {
     var tile = this.model;
-    var tileView = this;
-    var view = this.$el;
-    view.data('model', tile);
-    tile.view = view;
+    var view = tile.view = this;
+    this.$el.data('model', tile);
 
-    view.appendTo(opts.parent);
-    view.width(tileRadius*3);
-    view.height(tileRadius*3);
+    this.$el.appendTo(opts.parent.$el);
+    this.$el.width(tileRadius*3);
+    this.$el.height(tileRadius*3);
 
-    var canvas = $('<canvas />').appendTo(view);
+    var canvas = $('<canvas />').appendTo(this.$el);
     canvas.attr('width', tileRadius*3);
     canvas.attr('height', tileRadius*3);
     canvas.addLayer({
@@ -348,7 +347,7 @@ var TileView = Backbone.View.extend({
     });
     canvas.drawLayers();
 
-    var label = $('<div class="label" />').appendTo(view);
+    var label = $('<div class="label" />').appendTo(this.$el);
     $('<div class="letter">' + tile.letter + '</div>').appendTo(label);
     if (tile.value) {
       $('<sub class="value">' + tile.value + '</sub>').appendTo(label);
@@ -359,7 +358,8 @@ var TileView = Backbone.View.extend({
 
     this.model.on('add remove change', this.render, this);
 
-    view.mouseup(function (e) {
+    // Handle clicking on a tile without dragging. 
+    this.$el.mouseup(function (e) {
       if (!tile.isSelected()) {
         tile.select();
       } else {
@@ -367,7 +367,7 @@ var TileView = Backbone.View.extend({
       }
     });
 
-    view.draggable({
+    this.$el.draggable({
       distance: 5,
       stack: '.tile',
       revert: function (space) {
@@ -379,14 +379,14 @@ var TileView = Backbone.View.extend({
           // This might not result in an event, if dropped on/near the
           // same space, but we still need to move it back to the
           // center of its space, so just call render directly.
-          tileView.render();
+          view.render();
           return false;
         }
       },
       revertDuration: 200,
       start: function (e) {
         _.each(tile.legalSpaces(), function (space) {
-          space.view.droppable();
+          space.view.$el.droppable();
         });
       },
       stop: function (e) {
@@ -401,7 +401,7 @@ var TileView = Backbone.View.extend({
   render: function () {
     var space = this.model.space;
     if (space) {
-      this.$el.position({ my: 'left top', at: 'left top', of: space.view,
+      this.$el.position({ my: 'left top', at: 'left top', of: space.view.$el,
                           collision: 'none' });
     } else {
       this.$el.css('visibility', 'hidden');
@@ -433,11 +433,11 @@ var TileView = Backbone.View.extend({
 });
 
 var game;
-var gameView;
+var view;
 
 function main() {
   game = new Game();
-  gameView = new GameView({ model: game, el: $('#wordsearch') });
+  view = new GameView({ model: game, el: $('#wordsearch') });
 }
 
 $(main);
