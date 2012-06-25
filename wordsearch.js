@@ -47,7 +47,8 @@ var Game = Backbone.Model.extend({
       return function (letter, value, freq) {
         return _.map(_.range(freq), function (i) {
           return new Tile({ game: game, letter: letter, value: value });
-        })}.apply(game, args);
+        });
+      }.apply(game, args);
     })));
   },
 
