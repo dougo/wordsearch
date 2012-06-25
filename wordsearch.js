@@ -147,6 +147,7 @@ var Space = Backbone.Model.extend({
     if (oldSpace) oldSpace.tile = null;
     this.tile = tile;
     tile.moveTo(this);
+    tile.updateSelection();
   },
 
   isBetween: function (s1, s2) {
