@@ -317,7 +317,7 @@ var SpaceView = Backbone.View.extend({
     });
 
     if (space.tile) {
-      new TileView({ model: space.tile, parent: space.board.game.view});
+      new TileView({ model: space.tile, parent: space.board.game.view });
     }
   }
 });
@@ -334,7 +334,7 @@ var TileView = Backbone.View.extend({
     this.$el.width(tileRadius*3);
     this.$el.height(tileRadius*3);
 
-    var canvas = $('<canvas />').appendTo(this.$el);
+    var canvas = $(this.make('canvas')).appendTo(this.$el);
     canvas.attr('width', tileRadius*3);
     canvas.attr('height', tileRadius*3);
     canvas.addLayer({
@@ -348,11 +348,10 @@ var TileView = Backbone.View.extend({
     });
     canvas.drawLayers();
 
-    var label = $('<div class="label" />').appendTo(this.$el);
-    $('<div class="letter">' + tile.letter + '</div>').appendTo(label);
-    if (tile.value) {
-      $('<sub class="value">' + tile.value + '</sub>').appendTo(label);
-    }
+    var label = $(this.make('div', { 'class': 'label' })).appendTo(this.$el);
+    label.append(this.make('div', { 'class': 'letter' }, tile.letter));
+    if (tile.value)
+      label.append(this.make('sub', { 'class': 'value' }, tile.value));
     label.position({ my: 'center', at: 'center', of: canvas });
 
     this.render();
