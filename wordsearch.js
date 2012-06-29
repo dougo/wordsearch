@@ -374,18 +374,7 @@ var TileView = Backbone.View.extend({
           return false;
         }
       },
-      revertDuration: 200,
-      start: function (e) {
-        _.each(tile.legalSpaces(), function (space) {
-          space.view.$el.droppable();
-        });
-      },
-      stop: function (e) {
-        // This bypasses the mouseup handler, because selection is
-        // updated in the revert function.
-        e.stopImmediatePropagation();
-        $('.space').droppable('destroy');
-      }
+      revertDuration: 200
     });
   },
 
@@ -423,7 +412,9 @@ var TileView = Backbone.View.extend({
   },
 
   events: {
-    'mouseup': 'mouseup'
+    mouseup: 'mouseup',
+    dragstart: 'dragstart',
+    dragstop: 'dragstop'
   },
 
   // Handle clicking on a tile without dragging. 
@@ -434,6 +425,18 @@ var TileView = Backbone.View.extend({
     } else {
       tile.updateSelection();
     }
+  },
+
+  dragstart: function () {
+    _.each(this.model.legalSpaces(), function (space) {
+      space.view.$el.droppable();
+    });
+  },
+  dragstop: function (e) {
+    // This bypasses the mouseup handler, because selection is
+    // updated in the revert function.
+    e.stopImmediatePropagation();
+    $('.space').droppable('destroy');
   }
 });
 
