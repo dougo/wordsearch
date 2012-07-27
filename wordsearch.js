@@ -32,6 +32,7 @@ var tileData = [
   [' ', 0, 2]
 ];
 
+////////////////////////////////////////////////////////////////
 // MODELS
 
 var Game = Backbone.Model.extend({
@@ -245,6 +246,7 @@ var Tiles = Backbone.Collection.extend({
   }
 });
 
+////////////////////////////////////////////////////////////////
 // VIEWS
 
 var GameView = Backbone.View.extend({
@@ -252,10 +254,31 @@ var GameView = Backbone.View.extend({
     var game = this.model;
     game.view = this;
 
-    this.$el.width(tileRadius*boardSize*3);
-    this.$el.height(tileRadius*boardSize*3);
-
     new BoardView({ model: game.board, parent: this });
+
+    var $buttons = $(this.make('div', { id: 'buttons' }));
+
+    var resetButton =
+      this.make('input', { type: 'submit', id: 'resetButton', value: 'Reset',
+                           onclick: 'game.reset()' });
+    var scoreButton =
+      this.make('input', { type: 'submit', id: 'scoreButton', value: 'Score',
+                           onclick: 'game.scoreWord()',
+                           disabled: 'disabled'
+                         });
+
+    $buttons.append(resetButton);
+    $buttons.append(scoreButton);
+
+    $buttons.append(this.make('span', { id: 'word' }));
+    $buttons.append(this.make('span', { id: 'score' }));
+
+    var $scorePanel = $(this.make('div', {}, 'Game score: '));
+    $scorePanel.append(this.make('span', { id: 'total' }, '0'));
+
+    this.$el.append(this.make('p'));
+    this.$el.append($buttons);
+    this.$el.append($scorePanel);
 
     game.selected.on('add remove change', this.render, this);
   },
@@ -381,6 +404,7 @@ var TileView = Backbone.View.extend({
   render: function () {
     var space = this.model.space;
     if (space) {
+      this.$el.css('position', 'absolute');
       this.$el.position({ my: 'left top', at: 'left top', of: space.view.$el,
                           collision: 'none' });
     } else {
