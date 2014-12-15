@@ -12,8 +12,7 @@ $(function () {
     ok(game, 'game object exists');
     ok(game.board, 'board object exists');
 
-    equal(Math.pow(boardSize, 2) - 4, game.makeTiles(tileData).length,
-          'game has correct number of tiles');
+    equal(game.makeTiles(tileData).length, Math.pow(boardSize, 2) - 4, 'game has correct number of tiles');
   });
 
   test('isBetween', function() {
@@ -46,5 +45,10 @@ $(function () {
     move(t, 3, 5);
     equal($.inArray(t.origin, t.legalSpaces()), 0,
           "tile can move back to origin");
+  });
+
+  test('Issue #12', function () {
+    var tiles = game.makeTiles(tileData);
+    ok(_.every(tiles, function (tile) { return tile.letter !== ' '; }), 'game has no blank tiles');
   });
 });
