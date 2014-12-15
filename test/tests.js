@@ -7,7 +7,7 @@ function move(tile, r, c) {
 }
 
 $(function () {
-  test('Basic tests', function() {
+  test('Basic tests', function () {
     ok($('#wordsearch').length > 0, 'wordsearch element exists');
     ok(game, 'game object exists');
     ok(game.board, 'board object exists');
@@ -15,7 +15,7 @@ $(function () {
     equal(game.makeTiles(tileData).length, Math.pow(boardSize, 2) - 4, 'game has correct number of tiles');
   });
 
-  test('isBetween', function() {
+  test('isBetween', function () {
     ok(game.board.spaceAt(1, 2).isBetween(game.board.spaceAt(0, 1),
                                           game.board.spaceAt(4, 5)));
     ok(game.board.spaceAt(0, 4).isBetween(game.board.spaceAt(0, 1),
@@ -24,7 +24,7 @@ $(function () {
                                            game.board.spaceAt(2, 2)));
   });
 
-  test('Issue #1', function() {
+  test('Issue #1', function () {
     var t1 = tileAt(4, 3);
     var t2 = tileAt(4, 2);
 
@@ -37,7 +37,7 @@ $(function () {
           "tile can't move back to origin");
   });
 
-  test('Issue #8', function() {
+  test('Issue #8', function () {
     // TO DO: arrange to call main() from or after QUnit.reset(), so
     // that the board will be reset and we could use tileAt(4, 3)
     // here.
