@@ -251,25 +251,25 @@ var GameView = Backbone.View.extend({
 
     new BoardView({ model: game.board, parent: this });
 
-    var $buttons = $(this.make('div', { id: 'buttons' }));
+    var $buttons = $('<div/>', { id: 'buttons' });
 
-    var resetButton = this.make('input', {
+    var resetButton = $('<input>', {
       type: 'submit', id: 'resetButton', value: 'Reset', onclick: 'game.reset()'
     });
-    var scoreButton = this.make('input', {
+    var scoreButton = $('<input>', {
       type: 'submit', id: 'scoreButton', value: 'Score', onclick: 'game.scoreWord()', disabled: 'disabled'
     });
 
     $buttons.append(resetButton);
     $buttons.append(scoreButton);
 
-    $buttons.append(this.make('span', { id: 'word' }));
-    $buttons.append(this.make('span', { id: 'score' }));
+    $buttons.append('<span id="word" />');
+    $buttons.append('<span id="score" />');
 
-    var $scorePanel = $(this.make('div', {}, 'Game score: '));
-    $scorePanel.append(this.make('span', { id: 'total' }, '0'));
+    var $scorePanel = $('<div>Game score: </div>');
+    $scorePanel.append('<span id="total">0</span>');
 
-    this.$el.append(this.make('p'));
+    this.$el.append('<p>');
     this.$el.append($buttons);
     this.$el.append($scorePanel);
 
@@ -350,7 +350,7 @@ var TileView = Backbone.View.extend({
     this.$el.width(tileRadius*3);
     this.$el.height(tileRadius*3);
 
-    var canvas = $(this.make('canvas')).appendTo(this.$el);
+    var canvas = $('<canvas>').appendTo(this.$el);
     canvas.attr('width', tileRadius*3);
     canvas.attr('height', tileRadius*3);
     canvas.addLayer({
@@ -364,10 +364,15 @@ var TileView = Backbone.View.extend({
     });
     canvas.drawLayers();
 
-    var label = $(this.make('div', { 'class': 'label' })).appendTo(this.$el);
-    label.append(this.make('div', { 'class': 'letter' }, tile.letter));
-    if (tile.value)
-      label.append(this.make('sub', { 'class': 'value' }, tile.value));
+    var label = $('<div/>', { 'class': 'label' }).appendTo(this.$el);
+    var letter = $('<div/>', { 'class': 'letter' });
+    letter.html(tile.letter);
+    label.append(letter);
+    if (tile.value) {
+      var value = $('<sub/>', { 'class': 'value' });
+      value.html(tile.value);
+      label.append(value);
+    }
     label.position({ my: 'center', at: 'center', of: canvas });
 
     this.render();
