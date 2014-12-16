@@ -453,7 +453,7 @@ var TileView = Backbone.View.extend({
   dragstop: function (e) {
     // This bypasses the mouseup handler, because selection is updated in the revert function.
     e.stopImmediatePropagation();
-    $('.space').droppable('destroy');
+    $('.space.ui-droppable').droppable('destroy');
   }
 });
 
