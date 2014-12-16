@@ -327,9 +327,8 @@ var SpaceView = Backbone.View.extend({
     drawCircle(this.$el, { x: tileRadius*1.5, y: tileRadius*1.5 });
 
     this.$el.position({
-      my: 'left top', at: 'left top', of: opts.parent.$el,
-      collision: 'none',
-      offset: space.c*tileRadius*3 + ' ' + space.r*tileRadius*3
+      my: 'left+' + space.c*tileRadius*3 + ' top+' + space.r*tileRadius*3, at: 'left top', of: opts.parent.$el,
+      collision: 'none'
     });
 
     if (space.tile) {
