@@ -16,12 +16,9 @@ $(function () {
   });
 
   test('isBetween', function () {
-    ok(game.board.spaceAt(1, 2).isBetween(game.board.spaceAt(0, 1),
-                                          game.board.spaceAt(4, 5)));
-    ok(game.board.spaceAt(0, 4).isBetween(game.board.spaceAt(0, 1),
-                                          game.board.spaceAt(0, 8)));
-    ok(!game.board.spaceAt(0, 0).isBetween(game.board.spaceAt(1, 1),
-                                           game.board.spaceAt(2, 2)));
+    ok( game.board.spaceAt(1, 2).isBetween(game.board.spaceAt(0, 1), game.board.spaceAt(4, 5)));
+    ok( game.board.spaceAt(0, 4).isBetween(game.board.spaceAt(0, 1), game.board.spaceAt(0, 8)));
+    ok(!game.board.spaceAt(0, 0).isBetween(game.board.spaceAt(1, 1), game.board.spaceAt(2, 2)));
   });
 
   test('Issue #1', function () {
@@ -33,18 +30,15 @@ $(function () {
     // move t2 through t1's origin
     move(t2, 4, 4);
 
-    equal($.inArray(t1.origin, t1.legalSpaces()), -1,
-          "tile can't move back to origin");
+    equal($.inArray(t1.origin, t1.legalSpaces()), -1, "tile can't move back to origin");
   });
 
   test('Issue #8', function () {
-    // TO DO: arrange to call main() from or after QUnit.reset(), so
-    // that the board will be reset and we could use tileAt(4, 3)
-    // here.
+    // TO DO: arrange to call main() from or after QUnit.reset(), so that the board will be reset and we could
+    // use tileAt(4, 3) here.
     var t = tileAt(3, 3);
     move(t, 3, 5);
-    equal($.inArray(t.origin, t.legalSpaces()), 0,
-          "tile can move back to origin");
+    equal($.inArray(t.origin, t.legalSpaces()), 0, "tile can move back to origin");
   });
 
   test('Issue #12', function () {

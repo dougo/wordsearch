@@ -93,10 +93,9 @@ var Game = Backbone.Model.extend({
 
   scoreWord: function () {
     this.total += this.score();
-    // Copy to a fresh array first, rather than iterating over the
-    // collection (which gets mutated during the iteration).
-    var tiles = this.selected.toArray();
-    _.invoke(tiles, 'remove');
+    // Copy to a fresh array first, rather than iterating over the collection (which gets mutated during the
+    // iteration).
+    _.invoke(this.selected.toArray(), 'remove');
   }
 });
 
@@ -125,8 +124,7 @@ var Board = Backbone.Model.extend({
     _.each(_.range(boardSize), function (r) {
       _.each(_.range(boardSize), function (c) {
         // Leave the center four spaces blank.
-        if (r < boardSize/2 - 1 || r > boardSize/2 ||
-            c < boardSize/2 - 1 || c > boardSize/2) {
+        if (r < boardSize/2 - 1 || r > boardSize/2 || c < boardSize/2 - 1 || c > boardSize/2) {
           var tile = tiles.pop();
           var space = board.spaceAt(r, c);
           tile.origin = space;
@@ -175,11 +173,9 @@ var Tile = Backbone.Model.extend({
     var c0 = this.origin.c;
     var spaces = [];
     if (!this.origin.tile) {
-      // A tile can't move back to its origin if it would be in the
-      // way of another tile that's already moved.
+      // A tile can't move back to its origin if it would be in the way of another tile that's already moved.
       if (!this.game.selected.any(function (movedTile) {
-        return tile != movedTile &&
-          tile.origin.isBetween(movedTile.origin, movedTile.space);
+        return tile != movedTile && tile.origin.isBetween(movedTile.origin, movedTile.space);
       })) {
         spaces.push(this.origin);
       }
@@ -257,14 +253,12 @@ var GameView = Backbone.View.extend({
 
     var $buttons = $(this.make('div', { id: 'buttons' }));
 
-    var resetButton =
-      this.make('input', { type: 'submit', id: 'resetButton', value: 'Reset',
-                           onclick: 'game.reset()' });
-    var scoreButton =
-      this.make('input', { type: 'submit', id: 'scoreButton', value: 'Score',
-                           onclick: 'game.scoreWord()',
-                           disabled: 'disabled'
-                         });
+    var resetButton = this.make('input', {
+      type: 'submit', id: 'resetButton', value: 'Reset', onclick: 'game.reset()'
+    });
+    var scoreButton = this.make('input', {
+      type: 'submit', id: 'scoreButton', value: 'Score', onclick: 'game.scoreWord()', disabled: 'disabled'
+    });
 
     $buttons.append(resetButton);
     $buttons.append(scoreButton);
@@ -389,9 +383,8 @@ var TileView = Backbone.View.extend({
           return true;
         } else {
           space.data('model').placeTile(tile);
-          // This might not result in an event, if dropped on/near the
-          // same space, but we still need to move it back to the
-          // center of its space, so just call render directly.
+          // This might not result in an event, if dropped on/near the same space, but we still need to move
+          // it back to the center of its space, so just call render directly.
           view.render();
           return false;
         }
@@ -404,8 +397,7 @@ var TileView = Backbone.View.extend({
     var space = this.model.space;
     if (space) {
       this.$el.css('position', 'absolute');
-      this.$el.position({ my: 'left top', at: 'left top', of: space.view.$el,
-                          collision: 'none' });
+      this.$el.position({ my: 'left top', at: 'left top', of: space.view.$el, collision: 'none' });
     } else {
       this.$el.css('visibility', 'hidden');
     }
@@ -451,13 +443,10 @@ var TileView = Backbone.View.extend({
   },
 
   dragstart: function () {
-    _.each(this.model.legalSpaces(), function (space) {
-      space.view.$el.droppable();
-    });
+    _.each(this.model.legalSpaces(), function (space) { space.view.$el.droppable(); });
   },
   dragstop: function (e) {
-    // This bypasses the mouseup handler, because selection is
-    // updated in the revert function.
+    // This bypasses the mouseup handler, because selection is updated in the revert function.
     e.stopImmediatePropagation();
     $('.space').droppable('destroy');
   }
